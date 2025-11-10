@@ -1,0 +1,2190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tournament Mode — Standalone</title>
+<style>
+  /* ---------- THEME ---------- */
+  :root{
+    --bg:#f9fafb; --fg:#111827; --card:#ffffff; --bd:#e5e7eb;
+    --track:#e5e7eb; --fill:#111827; --muted:#6b7280;
+    --ok-bg:#d1fae5; --ok-fg:#065f46; --warn-bg:#fef3c7; --warn-fg:#92400e; --bad-bg:#fee2e2; --bad-fg:#7f1d1d;
+    --prop-bg:#dbeafe; --prop-border:#93c5fd; --prop-fg:#1e3a8a;
+    --opp-bg:#fee2e2; --opp-border:#fca5a5; --opp-fg:#7f1d1d;
+    --prep-bg:#f3f4f6; --prep-border:#d1d5db; --prep-fg:#374151;
+    --btn-active-bg: #111827;
+    --btn-active-fg: #ffffff;
+  }
+  :root.dark{
+    --bg:#1f2937; --fg:#f9fafb; --card:#111827; --bd:#374151;
+    --track:#374151; --fill:#f9fafb; --muted:#9ca3af;
+    --warn-bg:#78350f; --warn-fg:#fbbf24; --bad-bg:#7f1d1d; --bad-fg:#fca5a5;
+    --btn-active-bg: #f9fafb;
+    --btn-active-fg: #1f2937;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--fg);font:16px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  
+  .wrap{min-height:100%;display:flex;flex-direction:column;gap:24px;align-items:center;padding:24px}
+  .container{width:100%;max-width:1100px;display:flex;flex-direction:column;gap:16px}
+  header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  h1{font-size:24px;margin:0}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .btn{appearance:none;border:1px solid var(--bd);background:var(--card);color:var(--fg);border-radius:12px;padding:10px 14px;cursor:pointer;font-weight:700}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--fill);color:var(--card);border-color:var(--fill)}
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px}
+  .muted{color:var(--muted)}
+  .grid{display:grid;gap:12px}
+  .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .label{display:flex;flex-direction:column;gap:6px}
+  input.input, select.input, textarea.input{padding:10px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg)}
+  .note{font-size:14px;color:var(--muted)}
+  
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 2px solid var(--bd);
+    margin-bottom: 20px;
+    padding: 0 4px;
+  }
+  .tab {
+    padding: 12px 24px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: -2px;
+  }
+  .tab:hover {
+    color: var(--fg);
+    background: var(--bg);
+  }
+  .tab.active {
+    color: var(--fg);
+    border-bottom-color: var(--fill);
+  }
+  .tab-content {
+    display: none;
+  }
+  .tab-content.active {
+    display: block;
+  }
+  
+  /* Status bar */
+  #statusBar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--card);
+    border-top: 1px solid var(--bd);
+    padding: 12px 24px;
+    font-size: 14px;
+    z-index: 100;
+  }
+  
+  /* Theme button */
+  .btn-icon {
+    width: 46px;
+    height: 46px;
+    padding: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .btn-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+  #themeBtn .icon-light { display: none; }
+  .dark #themeBtn .icon-light { display: inline-block; }
+  .dark #themeBtn .icon-dark { display: none; }
+  
+  @media (max-width:800px){.grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-2{grid-template-columns:1fr}}
+  @media (max-width:540px){.grid-3{grid-template-columns:1fr}.grid-2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="container">
+      <header>
+        <h1>Tournament Management</h1>
+        <div class="row">
+          <button id="themeBtn" class="btn btn-icon" title="Toggle Dark Mode">
+            <svg class="icon-dark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            <svg class="icon-light" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+              <circle cx="12" cy="12" r="4"></circle>
+              <polygon points="12,0 13,4 11,4"></polygon>
+              <polygon points="12,24 13,20 11,20"></polygon>
+              <polygon points="0,12 4,13 4,11"></polygon>
+              <polygon points="24,12 20,13 20,11"></polygon>
+              <polygon points="3.5,3.5 5.5,5.5 4.5,6.5 2.5,4.5"></polygon>
+              <polygon points="20.5,20.5 22.5,22.5 21.5,23.5 19.5,21.5"></polygon>
+              <polygon points="3.5,20.5 5.5,18.5 4.5,17.5 2.5,19.5"></polygon>
+              <polygon points="20.5,3.5 22.5,5.5 21.5,6.5 19.5,4.5"></polygon>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Tournament Management -->
+      <div class="card">
+        <div style="font-weight:800;margin-bottom:16px;font-size:20px">Tournament Management</div>
+        <div id="tournamentPanel">
+        <!-- Tournament Selection/Creation -->
+        <div class="grid grid-2" style="margin-bottom:16px">
+          <label class="label">
+            <span>Current Tournament</span>
+            <select id="tournamentSelect" class="input">
+              <option value="">-- Select Tournament --</option>
+            </select>
+          </label>
+          <button id="newTournamentBtn" class="btn btn-primary">+ New Tournament</button>
+        </div>
+        
+        <!-- Tournament Data Management -->
+        <div style="margin-bottom:16px;padding:12px;background:var(--card);border:1px solid var(--bd);border-radius:8px">
+          <h3 style="margin:0 0 12px 0;font-size:16px">Tournament Data</h3>
+          <div class="row" style="gap:8px;flex-wrap:wrap">
+            <button id="exportTournamentsBtn" class="btn btn-primary">Export Tournaments</button>
+            <button id="importTournamentsBtn" class="btn">Import Tournaments</button>
+            <button id="purgeTournamentsBtn" class="btn" style="background:#dc2626;color:white">Purge All Tournaments</button>
+            <input type="file" id="importTournamentsFile" accept="application/json" style="display:none">
+          </div>
+        </div>
+        
+        <!-- Tournament Type Selection -->
+        <div style="margin-bottom:16px;padding:12px;background:var(--card);border:1px solid var(--bd);border-radius:8px">
+          <label class="label" style="margin-bottom:8px">
+            <span>Tournament Type</span>
+            <select id="tournamentTypeSelect" class="input">
+              <option value="manual">Manual (Custom Rounds)</option>
+              <option value="roundrobin">Round Robin (League)</option>
+              <option value="elimination">Elimination (Bracket)</option>
+            </select>
+          </label>
+        </div>
+        
+        <!-- Tournament Sub-Tabs -->
+        <div id="tournamentSubTabs" style="display:none;margin-bottom:16px">
+          <div class="tabs" style="border-bottom:1px solid var(--bd);margin-bottom:0">
+            <button class="tab active" id="teamsMatchupsTabBtn" data-subtab="teams-matchups">Teams & Matchups</button>
+            <button class="tab" id="bracketTabBtn" data-subtab="bracket">Bracket</button>
+            <button class="tab" id="roundManagementTabBtn" data-subtab="round-management">Round Management</button>
+            <button class="tab" id="standingsTabBtn" data-subtab="standings">Standings</button>
+            <button class="tab" id="roundScoresTabBtn" data-subtab="round-scores">Round Scores</button>
+          </div>
+        </div>
+        
+        <!-- Teams & Matchups Sub-Tab Content -->
+        <div id="teamsMatchupsTabContent" class="tab-content active">
+          <!-- Team Management (for Round Robin and Elimination) -->
+          <div id="teamManagementSection" style="display:none;margin-bottom:16px;padding:12px;background:var(--card);border:1px solid var(--bd);border-radius:8px">
+            <h3 style="margin:0 0 12px 0;font-size:18px">Teams</h3>
+            <div class="grid grid-2" style="margin-bottom:12px">
+              <input type="text" id="newTeamInput" class="input" placeholder="Team name">
+              <button id="addTeamBtn" class="btn btn-primary">Add Team</button>
+            </div>
+            <div id="teamsList" style="margin-top:12px">
+              <p style="color:var(--muted);text-align:center;padding:10px">No teams added yet</p>
+            </div>
+            <div style="margin-top:12px" class="row" style="gap:8px">
+              <button id="generateRoundRobinBtn" class="btn btn-primary" style="flex:1;display:none">Auto-Generate Schedule</button>
+              <button id="generateBracketBtn" class="btn btn-primary" style="flex:1;display:none">Generate Bracket</button>
+              <button id="editScheduleBtn" class="btn" style="flex:1;display:none">Edit Schedule Manually</button>
+            </div>
+          </div>
+          
+          <!-- Manual Schedule Editor (for Round Robin) -->
+          <div id="manualScheduleSection" style="display:none;margin-bottom:16px;padding:12px;background:var(--card);border:1px solid var(--bd);border-radius:8px">
+            <h3 style="margin:0 0 12px 0;font-size:18px">Manual Schedule Editor</h3>
+            <div id="manualScheduleList" style="margin-bottom:12px;max-height:300px;overflow-y:auto">
+              <p style="color:var(--muted);text-align:center;padding:10px">No matchups in schedule</p>
+            </div>
+            <div class="grid grid-3" style="margin-bottom:12px">
+              <label class="label">
+                <span>Team 1 (Prop)</span>
+                <select id="manualPropTeam" class="input">
+                  <option value="">Select team...</option>
+                </select>
+              </label>
+              <label class="label">
+                <span>Team 2 (Opp)</span>
+                <select id="manualOppTeam" class="input">
+                  <option value="">Select team...</option>
+                </select>
+              </label>
+              <label class="label">
+                <span>Round</span>
+                <input type="number" id="manualRoundNum" class="input" value="1" min="1">
+              </label>
+            </div>
+            <div class="row" style="gap:8px">
+              <button id="addMatchupBtn" class="btn btn-primary">Add Matchup</button>
+              <button id="clearScheduleBtn" class="btn">Clear All</button>
+              <button id="saveScheduleBtn" class="btn btn-primary">Save Schedule</button>
+            </div>
+          </div>
+          
+          <!-- Auto-Generated Schedule (from completed rounds) -->
+          <div id="autoGeneratedScheduleSection" style="display:none;margin-bottom:16px;padding:12px;background:var(--card);border:1px solid var(--bd);border-radius:8px">
+            <h3 style="margin:0 0 12px 0;font-size:18px">Match Schedule (Auto-Generated)</h3>
+            <div id="autoGeneratedScheduleList" style="max-height:400px;overflow-y:auto">
+              <p style="color:var(--muted);text-align:center;padding:20px">No completed rounds yet</p>
+            </div>
+          </div>
+          
+        </div>
+        
+        <!-- Round Management Sub-Tab Content -->
+        <div id="roundManagementTabContent" class="tab-content">
+          <!-- Start Round Section -->
+          <div id="startRoundSection" style="display:none;padding:12px;background:var(--card);border:1px solid var(--bd);border-radius:8px;margin-bottom:16px">
+          <h3 style="margin:0 0 12px 0;font-size:18px">Start New Round</h3>
+          
+          <!-- Matchup Selector (for Round Robin tournaments with schedule) -->
+          <div id="matchupSelectorSection" style="display:none;margin-bottom:12px;padding:12px;background:var(--bg);border:1px solid var(--bd);border-radius:6px">
+            <label class="label" style="margin-bottom:8px">
+              <span>Select Matchup from Schedule</span>
+              <select id="matchupSelector" class="input">
+                <option value="">-- Select a matchup --</option>
+              </select>
+            </label>
+            <p style="font-size:12px;color:var(--muted);margin:4px 0 0 0">Or enter teams manually below</p>
+          </div>
+          
+          <div class="grid grid-2" style="margin-bottom:12px">
+            <label class="label">
+              <span>Round Number</span>
+              <input type="number" id="roundNumberInput" class="input" value="1" min="1">
+            </label>
+            <label class="label">
+              <span>Room/Location</span>
+              <input type="text" id="roundRoomInput" class="input" placeholder="e.g., Room A">
+            </label>
+          </div>
+          <div class="grid grid-2" style="margin-bottom:12px">
+            <label class="label" style="position:relative">
+              <span>Proposition Team</span>
+              <input type="text" id="propTeamInput" class="input" placeholder="Team A" autocomplete="off">
+              <div id="propTeamSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--bd);border-top:none;border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;z-index:1000;margin-top:-1px"></div>
+            </label>
+            <label class="label" style="position:relative">
+              <span>Opposition Team</span>
+              <input type="text" id="oppTeamInput" class="input" placeholder="Team B" autocomplete="off">
+              <div id="oppTeamSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--bd);border-top:none;border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;z-index:1000;margin-top:-1px"></div>
+            </label>
+          </div>
+          <button id="startRoundBtn" class="btn btn-primary">Start Round</button>
+        </div>
+        
+        <!-- Current Round Info -->
+        <div id="currentRoundInfo" style="display:none;padding:12px;background:var(--card);border:1px solid var(--bd);border-radius:8px;margin-bottom:16px">
+          <h3 style="margin:0 0 12px 0;font-size:18px">Round <span id="roundNumber">1</span></h3>
+          <div class="grid grid-2" style="margin-bottom:12px">
+            <div>
+              <strong>Proposition:</strong> <span id="propTeamName">Team A</span>
+            </div>
+            <div>
+              <strong>Opposition:</strong> <span id="oppTeamName">Team B</span>
+            </div>
+          </div>
+          <div class="row" style="gap:8px">
+            <button id="endRoundBtn" class="btn btn-primary">End Round & Record Result</button>
+            <button id="cancelRoundBtn" class="btn">Cancel Round</button>
+          </div>
+          </div>
+        </div>
+        
+        <!-- Bracket Sub-Tab Content -->
+        <div id="bracketTabContent" class="tab-content">
+          <div id="bracketSection" style="display:none;margin-bottom:16px;padding:12px;background:var(--card);border:1px solid var(--bd);border-radius:8px">
+            <h3 style="margin:0 0 12px 0;font-size:18px">Elimination Bracket</h3>
+            <div id="bracketContainer" style="overflow-x:auto;padding:16px">
+              <p style="color:var(--muted);text-align:center;padding:20px">No bracket generated yet. Add teams and click "Generate Bracket"</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Standings Sub-Tab Content -->
+        <div id="standingsTabContent" class="tab-content">
+          <!-- League Standings (for Round Robin) -->
+          <div id="leagueStandingsSection" style="display:none;margin-bottom:16px;padding:12px;background:var(--card);border:1px solid var(--bd);border-radius:8px">
+            <h3 style="margin:0 0 12px 0;font-size:18px">League Standings</h3>
+            <div id="standingsTable" style="overflow-x:auto">
+              <table style="width:100%;border-collapse:collapse">
+                <thead>
+                  <tr style="border-bottom:2px solid var(--bd)">
+                    <th style="text-align:left;padding:8px">Team</th>
+                    <th style="text-align:center;padding:8px">W</th>
+                    <th style="text-align:center;padding:8px">L</th>
+                    <th style="text-align:center;padding:8px">D</th>
+                    <th style="text-align:center;padding:8px">Points</th>
+                  </tr>
+                </thead>
+                <tbody id="standingsBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Round Scores Sub-Tab Content -->
+        <div id="roundScoresTabContent" class="tab-content">
+          <!-- Round Edit Section (for editing completed rounds) -->
+          <div id="roundEditSection" style="display:none;padding:12px;background:var(--card);border:1px solid var(--bd);border-radius:8px;margin-bottom:16px">
+            <h3 style="margin:0 0 12px 0;font-size:18px">Edit Round <span id="editRoundNumber">1</span></h3>
+            <div class="grid grid-2" style="margin-bottom:12px">
+              <div>
+                <strong>Proposition:</strong> <span id="editPropTeamName">Team A</span>
+              </div>
+              <div>
+                <strong>Opposition:</strong> <span id="editOppTeamName">Team B</span>
+              </div>
+            </div>
+            
+            <div id="editScoreEntrySection" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bd)">
+              <h4 style="margin:0 0 12px 0;font-size:16px">Edit Scores</h4>
+              <div class="grid grid-2" style="margin-bottom:12px">
+                <label class="label">
+                  <span>Proposition Score</span>
+                  <input type="number" id="editPropScoreInput" class="input" min="0" placeholder="Enter score">
+                </label>
+                <label class="label">
+                  <span>Opposition Score</span>
+                  <input type="number" id="editOppScoreInput" class="input" min="0" placeholder="Enter score">
+                </label>
+              </div>
+              <div id="editWinnerDisplay" style="margin-bottom:12px;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:14px;display:none">
+                <strong>Winner:</strong> <span id="editWinnerName"></span>
+              </div>
+              <div class="row" style="gap:8px">
+                <button id="saveEditRoundBtn" class="btn btn-primary">Save Changes</button>
+                <button id="cancelEditRoundBtn" class="btn">Cancel Edit</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Round History -->
+          <div id="roundHistory" style="margin-top:0">
+            <h3 style="font-size:16px;margin-bottom:12px">Round History</h3>
+            <div id="roundHistoryList" style="max-height:400px;overflow-y:auto">
+              <p style="color:var(--muted);text-align:center;padding:20px">No rounds recorded yet</p>
+            </div>
+          </div>
+        </div>
+    </div>
+    </div>
+  </div>
+  
+  <!-- Status Bar -->
+  <div id="statusBar">
+    <strong>Status:</strong> <span id="status">Ready</span>
+  </div>
+
+<script>
+(function() {
+  'use strict';
+  
+  // Helper function
+  const $ = (s,o=document)=>o.querySelector(s);
+  
+  // DOM Elements
+  const themeBtn = $('#themeBtn');
+  const tournamentPanel = $('#tournamentPanel');
+  const tournamentSelect = $('#tournamentSelect');
+  const newTournamentBtn = $('#newTournamentBtn');
+  const tournamentTypeSelect = $('#tournamentTypeSelect');
+  const teamManagementSection = $('#teamManagementSection');
+  const newTeamInput = $('#newTeamInput');
+  const addTeamBtn = $('#addTeamBtn');
+  const teamsList = $('#teamsList');
+  const generateRoundRobinBtn = $('#generateRoundRobinBtn');
+  const leagueStandingsSection = $('#leagueStandingsSection');
+  const standingsBody = $('#standingsBody');
+  const autoGeneratedScheduleSection = $('#autoGeneratedScheduleSection');
+  const autoGeneratedScheduleList = $('#autoGeneratedScheduleList');
+  const matchupSelectorSection = $('#matchupSelectorSection');
+  const matchupSelector = $('#matchupSelector');
+  const exportTournamentsBtn = $('#exportTournamentsBtn');
+  const importTournamentsBtn = $('#importTournamentsBtn');
+  const purgeTournamentsBtn = $('#purgeTournamentsBtn');
+  const importTournamentsFile = $('#importTournamentsFile');
+  const editScheduleBtn = $('#editScheduleBtn');
+  const manualScheduleSection = $('#manualScheduleSection');
+  const manualScheduleList = $('#manualScheduleList');
+  const manualPropTeam = $('#manualPropTeam');
+  const manualOppTeam = $('#manualOppTeam');
+  const manualRoundNum = $('#manualRoundNum');
+  const addMatchupBtn = $('#addMatchupBtn');
+  const clearScheduleBtn = $('#clearScheduleBtn');
+  const saveScheduleBtn = $('#saveScheduleBtn');
+  const startRoundSection = $('#startRoundSection');
+  const roundNumberInput = $('#roundNumberInput');
+  const roundRoomInput = $('#roundRoomInput');
+  const propTeamInput = $('#propTeamInput');
+  const oppTeamInput = $('#oppTeamInput');
+  const propTeamSuggestions = $('#propTeamSuggestions');
+  const oppTeamSuggestions = $('#oppTeamSuggestions');
+  const startRoundBtn = $('#startRoundBtn');
+  const currentRoundInfo = $('#currentRoundInfo');
+  const roundNumber = $('#roundNumber');
+  const propTeamName = $('#propTeamName');
+  const oppTeamName = $('#oppTeamName');
+  const endRoundBtn = $('#endRoundBtn');
+  const cancelRoundBtn = $('#cancelRoundBtn');
+  const roundHistoryList = $('#roundHistoryList');
+  const roundEditSection = $('#roundEditSection');
+  const editRoundNumber = $('#editRoundNumber');
+  const editPropTeamName = $('#editPropTeamName');
+  const editOppTeamName = $('#editOppTeamName');
+  const editPropScoreInput = $('#editPropScoreInput');
+  const editOppScoreInput = $('#editOppScoreInput');
+  const editWinnerDisplay = $('#editWinnerDisplay');
+  const editWinnerName = $('#editWinnerName');
+  const saveEditRoundBtn = $('#saveEditRoundBtn');
+  const cancelEditRoundBtn = $('#cancelEditRoundBtn');
+  let editingRound = null; // Track which round is being edited
+  const tournamentSubTabs = $('#tournamentSubTabs');
+  const teamsMatchupsTabBtn = $('#teamsMatchupsTabBtn');
+  const bracketTabBtn = $('#bracketTabBtn');
+  const roundManagementTabBtn = $('#roundManagementTabBtn');
+  const standingsTabBtn = $('#standingsTabBtn');
+  const roundScoresTabBtn = $('#roundScoresTabBtn');
+  const teamsMatchupsTabContent = $('#teamsMatchupsTabContent');
+  const bracketTabContent = $('#bracketTabContent');
+  const roundManagementTabContent = $('#roundManagementTabContent');
+  const standingsTabContent = $('#standingsTabContent');
+  const roundScoresTabContent = $('#roundScoresTabContent');
+  const statusEl = $('#status');
+  const generateBracketBtn = $('#generateBracketBtn');
+  const bracketSection = $('#bracketSection');
+  const bracketContainer = $('#bracketContainer');
+  
+  // State
+  let currentTournament = null;
+  let currentRound = null;
+  let currentFormat = 'SIMSON'; // Default format
+  
+  // Status function
+  function setStatus(msg) {
+    if (statusEl) statusEl.textContent = msg || 'Ready';
+  }
+  
+  // Theme toggle
+  function setDark(isDark) {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('tournamentTheme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('tournamentTheme', 'light');
+    }
+  }
+  
+  themeBtn.onclick = () => {
+    const isDark = document.documentElement.classList.contains('dark');
+    setDark(!isDark);
+  };
+  
+  // Load theme
+  try {
+    const theme = localStorage.getItem('tournamentTheme');
+    if (theme === 'dark') setDark(true);
+  } catch(e) {}
+  
+  // ---------- Tournament Management ----------
+  
+  function getTournaments() {
+    try {
+      const stored = localStorage.getItem('debateTournaments');
+      return stored ? JSON.parse(stored) : {};
+    } catch(e) {
+      console.warn('Failed to load tournaments:', e);
+      return {};
+    }
+  }
+  
+  function saveTournaments(tournaments) {
+    try {
+      localStorage.setItem('debateTournaments', JSON.stringify(tournaments));
+    } catch(e) {
+      console.warn('Failed to save tournaments:', e);
+      setStatus('Failed to save tournament (storage quota exceeded?)');
+    }
+  }
+  
+  function getTournament(id) {
+    const tournaments = getTournaments();
+    return tournaments[id] || null;
+  }
+  
+  function createTournament(name, format, type = 'manual') {
+    const tournament = {
+      id: 'tournament_' + Date.now(),
+      name: name,
+      format: format || currentFormat,
+      type: type,
+      created: new Date().toISOString(),
+      rounds: [],
+      teams: (type === 'roundrobin' || type === 'elimination') ? [] : null,
+      schedule: type === 'roundrobin' ? [] : null,
+      bracket: type === 'elimination' ? null : null, // Bracket structure for elimination
+      eliminated: type === 'elimination' ? [] : null // Track eliminated teams
+    };
+    
+    const tournaments = getTournaments();
+    tournaments[tournament.id] = tournament;
+    saveTournaments(tournaments);
+    
+    return tournament;
+  }
+  
+  function updateTournamentDropdown() {
+    if (!tournamentSelect) return;
+    
+    const tournaments = getTournaments();
+    tournamentSelect.innerHTML = '<option value="">-- Select Tournament --</option>';
+    
+    Object.entries(tournaments).forEach(([id, tournament]) => {
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = tournament.name + ' (' + tournament.rounds.length + ' rounds)';
+      tournamentSelect.appendChild(option);
+    });
+  }
+  
+  function startRound(tournamentId, roundNumber, propTeam, oppTeam, room) {
+    const tournament = getTournament(tournamentId);
+    if (!tournament) return;
+    
+    const round = {
+      id: 'round_' + Date.now(),
+      number: roundNumber,
+      date: new Date().toISOString(),
+      room: room || '',
+      teams: {
+        prop: propTeam || 'Team A',
+        opp: oppTeam || 'Team B'
+      },
+      timingData: null,
+      result: null,
+      started: new Date().toISOString()
+    };
+    
+    tournament.rounds.push(round);
+    const tournaments = getTournaments();
+    tournaments[tournament.id] = tournament;
+    saveTournaments(tournaments);
+    
+    currentTournament = tournament;
+    currentRound = round;
+    updateTournamentUI();
+    setStatus(`Round ${roundNumber} started!`);
+  }
+  
+  function endRound(result) {
+    if (!currentRound || !currentTournament) return;
+    
+    currentRound.result = result;
+    currentRound.ended = new Date().toISOString();
+    
+    // Handle elimination progression
+    if (currentTournament.type === 'elimination' && currentTournament.bracket) {
+      const winner = result.winner === 'prop' ? currentRound.teams.prop : currentRound.teams.opp;
+      const loser = result.winner === 'prop' ? currentRound.teams.opp : currentRound.teams.prop;
+      
+      // Mark loser as eliminated
+      if (!currentTournament.eliminated) currentTournament.eliminated = [];
+      if (!currentTournament.eliminated.includes(loser)) {
+        currentTournament.eliminated.push(loser);
+      }
+      
+      // Advance winner to next round
+      advanceBracketWinner(currentRound, winner);
+    }
+    
+    const tournaments = getTournaments();
+    tournaments[currentTournament.id] = currentTournament;
+    saveTournaments(tournaments);
+    
+    if (currentTournament && (!currentTournament.schedule || currentTournament.schedule.length === 0)) {
+      generateScheduleFromRounds();
+    } else if (currentTournament && currentTournament.schedule) {
+      updateScheduleWithRound();
+    }
+    
+    currentRound = null;
+    updateTournamentUI();
+    updateRoundHistory();
+    updateStandings();
+    updateMatchupSelector();
+    updateAutoGeneratedSchedule();
+    updateBracket();
+    updateBracketMatchupSelector();
+    updateTournamentDropdown();
+    setStatus('Round recorded successfully!');
+  }
+  
+  function generateScheduleFromRounds() {
+    if (!currentTournament) return;
+    
+    if (!currentTournament.schedule) {
+      currentTournament.schedule = [];
+    }
+    
+    const completedRounds = currentTournament.rounds.filter(r => r.result);
+    
+    completedRounds.forEach(round => {
+      const exists = currentTournament.schedule.some(m => 
+        (m.prop === round.teams.prop && m.opp === round.teams.opp) ||
+        (m.prop === round.teams.opp && m.opp === round.teams.prop)
+      );
+      
+      if (!exists && round.teams.prop && round.teams.opp) {
+        currentTournament.schedule.push({
+          prop: round.teams.prop,
+          opp: round.teams.opp,
+          round: round.number,
+          completed: true,
+          result: round.result
+        });
+      }
+    });
+    
+    const tournaments = getTournaments();
+    tournaments[currentTournament.id] = currentTournament;
+    saveTournaments(tournaments);
+  }
+  
+  function updateScheduleWithRound() {
+    if (!currentTournament || !currentRound || !currentRound.result) return;
+    
+    const matchup = currentTournament.schedule.find(m => 
+      (m.prop === currentRound.teams.prop && m.opp === currentRound.teams.opp) ||
+      (m.prop === currentRound.teams.opp && m.opp === currentRound.teams.prop)
+    );
+    
+    if (matchup) {
+      matchup.completed = true;
+      matchup.result = currentRound.result;
+      matchup.round = currentRound.number;
+    } else if (currentRound.teams.prop && currentRound.teams.opp) {
+      currentTournament.schedule.push({
+        prop: currentRound.teams.prop,
+        opp: currentRound.teams.opp,
+        round: currentRound.number,
+        completed: true,
+        result: currentRound.result
+      });
+    }
+    
+    const tournaments = getTournaments();
+    tournaments[currentTournament.id] = currentTournament;
+    saveTournaments(tournaments);
+  }
+  
+  function updateAutoGeneratedSchedule() {
+    if (!currentTournament) {
+      autoGeneratedScheduleSection.style.display = 'none';
+      return;
+    }
+    
+    const completedRounds = currentTournament.rounds.filter(r => r.result);
+    if (completedRounds.length > 0) {
+      if (!currentTournament.schedule || currentTournament.schedule.length === 0) {
+        generateScheduleFromRounds();
+      }
+      
+      if (currentTournament.schedule && currentTournament.schedule.length > 0) {
+        autoGeneratedScheduleSection.style.display = 'block';
+        
+        const scheduleByRound = {};
+        currentTournament.schedule.forEach(matchup => {
+          const round = matchup.round || 1;
+          if (!scheduleByRound[round]) scheduleByRound[round] = [];
+          scheduleByRound[round].push(matchup);
+        });
+        
+        autoGeneratedScheduleList.innerHTML = Object.keys(scheduleByRound).sort((a, b) => a - b).map(roundNum => {
+          const roundMatchups = scheduleByRound[roundNum];
+          return `
+            <div style="margin-bottom:16px">
+              <h4 style="margin:0 0 8px 0;font-size:14px;color:var(--muted);font-weight:600">Round ${roundNum}</h4>
+              ${roundMatchups.map(matchup => {
+                let resultHtml = '';
+                let bgColor = 'var(--bg)';
+                let borderColor = 'var(--bd)';
+                
+                if (matchup.completed && matchup.result) {
+                  const winner = matchup.result.winner === 'prop' ? matchup.prop : matchup.opp;
+                  let score = '';
+                  if (matchup.result.propScore !== null && matchup.result.oppScore !== null) {
+                    score = ` (${matchup.result.propScore}-${matchup.result.oppScore})`;
+                  }
+                  
+                  if (matchup.result.winner === 'prop') {
+                    resultHtml = `<span style="color:var(--prop-fg);font-weight:600">✓ ${matchup.prop} won${score}</span>`;
+                    bgColor = 'rgba(34, 197, 94, 0.1)';
+                    borderColor = 'var(--prop-fg)';
+                  } else if (matchup.result.winner === 'opp') {
+                    resultHtml = `<span style="color:var(--opp-fg);font-weight:600">✓ ${matchup.opp} won${score}</span>`;
+                    bgColor = 'rgba(239, 68, 68, 0.1)';
+                    borderColor = 'var(--opp-fg)';
+                  } else {
+                    resultHtml = `<span style="color:var(--muted)">Draw${score}</span>`;
+                  }
+                } else {
+                  resultHtml = '<span style="color:var(--muted)">Pending</span>';
+                }
+                
+                return `
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid ${borderColor};border-radius:6px;margin-bottom:6px;background:${bgColor}">
+                    <div style="flex:1">
+                      <div style="font-weight:600;margin-bottom:4px">
+                        <span style="color:var(--prop-fg)">${matchup.prop}</span> vs 
+                        <span style="color:var(--opp-fg)">${matchup.opp}</span>
+                      </div>
+                    </div>
+                    <div style="text-align:right;font-size:14px">
+                      ${resultHtml}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `;
+        }).join('');
+      } else {
+        autoGeneratedScheduleSection.style.display = 'none';
+      }
+      
+      if (currentTournament.type === 'roundrobin' && currentTournament.schedule) {
+        updateMatchupSelector();
+      }
+    } else {
+      autoGeneratedScheduleSection.style.display = 'none';
+    }
+  }
+  
+  function updateTournamentUI() {
+    if (!currentTournament) {
+      startRoundSection.style.display = 'none';
+      currentRoundInfo.style.display = 'none';
+      teamManagementSection.style.display = 'none';
+      leagueStandingsSection.style.display = 'none';
+      matchupSelectorSection.style.display = 'none';
+      tournamentSubTabs.style.display = 'none';
+      tournamentTypeSelect.value = 'manual';
+      return;
+    }
+    
+    tournamentTypeSelect.value = currentTournament.type || 'manual';
+    
+    tournamentSubTabs.style.display = 'block';
+    
+    if (!teamsMatchupsTabContent.classList.contains('active') && 
+        !bracketTabContent.classList.contains('active') &&
+        !roundManagementTabContent.classList.contains('active') &&
+        !standingsTabContent.classList.contains('active') &&
+        !roundScoresTabContent.classList.contains('active')) {
+      if (currentTournament.type === 'elimination') {
+        switchTournamentSubTab('bracket');
+      } else {
+        switchTournamentSubTab('teams-matchups');
+      }
+    }
+    
+    // Show/hide bracket tab based on tournament type
+    if (currentTournament.type === 'elimination') {
+      bracketTabBtn.style.display = 'block';
+    } else {
+      bracketTabBtn.style.display = 'none';
+      if (bracketTabContent.classList.contains('active')) {
+        switchTournamentSubTab('teams-matchups');
+      }
+    }
+    
+    if (currentTournament.type === 'roundrobin') {
+      teamManagementSection.style.display = 'block';
+      generateRoundRobinBtn.style.display = 'block';
+      generateBracketBtn.style.display = 'none';
+      editScheduleBtn.style.display = 'block';
+      updateTeamsList();
+      updateStandings();
+      updateManualTeamDropdowns();
+      if (currentTournament.schedule && currentTournament.schedule.length > 0) {
+        matchupSelectorSection.style.display = 'block';
+        updateMatchupSelector();
+      } else {
+        matchupSelectorSection.style.display = 'none';
+      }
+      bracketSection.style.display = 'none';
+    } else if (currentTournament.type === 'elimination') {
+      teamManagementSection.style.display = 'block';
+      generateRoundRobinBtn.style.display = 'none';
+      generateBracketBtn.style.display = 'block';
+      editScheduleBtn.style.display = 'none';
+      updateTeamsList();
+      updateBracket();
+      bracketSection.style.display = 'block';
+      leagueStandingsSection.style.display = 'none';
+      manualScheduleSection.style.display = 'none';
+      // Show matchup selector if bracket exists
+      if (currentTournament.bracket && currentTournament.bracket.length > 0) {
+        matchupSelectorSection.style.display = 'block';
+        updateBracketMatchupSelector();
+      } else {
+        matchupSelectorSection.style.display = 'none';
+      }
+    } else {
+      teamManagementSection.style.display = 'none';
+      leagueStandingsSection.style.display = 'none';
+      manualScheduleSection.style.display = 'none';
+      matchupSelectorSection.style.display = 'none';
+      bracketSection.style.display = 'none';
+      generateRoundRobinBtn.style.display = 'none';
+      generateBracketBtn.style.display = 'none';
+      editScheduleBtn.style.display = 'none';
+    }
+    
+    setupTeamAutocomplete();
+    updateAutoGeneratedSchedule();
+    updateRoundHistory();
+    
+    if (currentRound) {
+      startRoundSection.style.display = 'none';
+      currentRoundInfo.style.display = 'block';
+      roundNumber.textContent = currentRound.number;
+      propTeamName.textContent = currentRound.teams.prop || 'Team A';
+      oppTeamName.textContent = currentRound.teams.opp || 'Team B';
+    } else {
+      startRoundSection.style.display = 'block';
+      currentRoundInfo.style.display = 'none';
+      const nextRound = currentTournament ? currentTournament.rounds.length + 1 : 1;
+      roundNumberInput.value = nextRound;
+    }
+    
+    // Hide edit section if not editing
+    if (roundEditSection && !editingRound) {
+      roundEditSection.style.display = 'none';
+    }
+  }
+  
+  function updateRoundHistory() {
+    if (!currentTournament || currentTournament.rounds.length === 0) {
+      roundHistoryList.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">No rounds recorded yet</p>';
+      return;
+    }
+    
+    const rounds = [...currentTournament.rounds].reverse();
+    roundHistoryList.innerHTML = rounds.map((round, i) => {
+      const date = new Date(round.date).toLocaleDateString();
+      let result = 'In progress';
+      if (round.result) {
+        const winner = round.result.winner === 'prop' ? round.teams.prop : round.teams.opp;
+        if (round.result.propScore !== null && round.result.oppScore !== null) {
+          result = `${winner} won (${round.result.propScore}-${round.result.oppScore})`;
+        } else {
+          result = `${winner} won`;
+        }
+      }
+      
+      const roundIndex = currentTournament.rounds.length - 1 - i; // Original index
+      
+      return `
+        <div style="padding:12px;border:1px solid var(--bd);border-radius:8px;margin-bottom:8px;background:var(--card)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <strong>Round ${round.number}${round.room ? ' - ' + round.room : ''}</strong>
+            <span style="font-size:12px;color:var(--muted)">${date}</span>
+          </div>
+          <div style="font-size:14px;margin-bottom:4px">
+            <span style="color:var(--prop-fg)">${round.teams.prop || 'Team A'}</span> vs 
+            <span style="color:var(--opp-fg)">${round.teams.opp || 'Team B'}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px">${result}</div>
+          ${round.result ? `
+            <button class="btn" onclick="editRound(${roundIndex})" style="padding:6px 12px;font-size:12px">Edit</button>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+  
+  // Function to edit a round
+  function editRound(roundIndex) {
+    if (!currentTournament || !currentTournament.rounds[roundIndex]) return;
+    
+    const round = currentTournament.rounds[roundIndex];
+    editingRound = roundIndex;
+    
+    // Populate edit form
+    editRoundNumber.textContent = round.number;
+    editPropTeamName.textContent = round.teams.prop || 'Team A';
+    editOppTeamName.textContent = round.teams.opp || 'Team B';
+    
+    if (round.result) {
+      editPropScoreInput.value = round.result.propScore !== null ? round.result.propScore : '';
+      editOppScoreInput.value = round.result.oppScore !== null ? round.result.oppScore : '';
+      updateEditWinnerDisplay();
+    } else {
+      editPropScoreInput.value = '';
+      editOppScoreInput.value = '';
+      editWinnerDisplay.style.display = 'none';
+    }
+    
+    // Switch to Round Scores tab to show edit section
+    switchTournamentSubTab('round-scores');
+    
+    // Show edit section and scroll to it
+    setTimeout(() => {
+      roundEditSection.style.display = 'block';
+      roundEditSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+  }
+  
+  // Make editRound globally accessible
+  window.editRound = editRound;
+  
+  // Update edit winner display based on scores
+  function updateEditWinnerDisplay() {
+    if (editingRound === null || !currentTournament || !currentTournament.rounds[editingRound]) return;
+    
+    const round = currentTournament.rounds[editingRound];
+    const propScore = editPropScoreInput.value ? parseFloat(editPropScoreInput.value) : null;
+    const oppScore = editOppScoreInput.value ? parseFloat(editOppScoreInput.value) : null;
+    
+    if (propScore !== null && oppScore !== null) {
+      let winner = '';
+      if (propScore > oppScore) {
+        winner = round.teams.prop || 'Team A';
+      } else if (oppScore > propScore) {
+        winner = round.teams.opp || 'Team B';
+      } else {
+        winner = 'Draw';
+      }
+      
+      editWinnerName.textContent = winner;
+      editWinnerDisplay.style.display = 'block';
+    } else {
+      editWinnerDisplay.style.display = 'none';
+    }
+  }
+  
+  function updateTeamsList() {
+    if (!currentTournament || (currentTournament.type !== 'roundrobin' && currentTournament.type !== 'elimination')) {
+      teamsList.innerHTML = '<p style="color:var(--muted);text-align:center;padding:10px">No teams added yet</p>';
+      return;
+    }
+    
+    const teams = currentTournament.teams || [];
+    if (teams.length === 0) {
+      teamsList.innerHTML = '<p style="color:var(--muted);text-align:center;padding:10px">No teams added yet</p>';
+      return;
+    }
+    
+    teamsList.innerHTML = teams.map((team, index) => {
+      return `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border:1px solid var(--bd);border-radius:4px;margin-bottom:4px;background:var(--bg)">
+          <span>${team}</span>
+          <button class="btn" onclick="removeTeam(${index})" style="padding:4px 8px;font-size:12px">Remove</button>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  function addTeam(teamName) {
+    if (!currentTournament || (currentTournament.type !== 'roundrobin' && currentTournament.type !== 'elimination')) return;
+    if (!teamName || teamName.trim() === '') return;
+    
+    if (!currentTournament.teams) currentTournament.teams = [];
+    if (currentTournament.teams.includes(teamName.trim())) {
+      setStatus('Team already exists');
+      return;
+    }
+    
+    currentTournament.teams.push(teamName.trim());
+    const tournaments = getTournaments();
+    tournaments[currentTournament.id] = currentTournament;
+    saveTournaments(tournaments);
+    
+    updateTeamsList();
+    if (currentTournament.type === 'roundrobin') {
+      updateManualTeamDropdowns();
+    }
+    newTeamInput.value = '';
+    setStatus('Team added');
+  }
+  
+  function removeTeam(index) {
+    if (!currentTournament || (currentTournament.type !== 'roundrobin' && currentTournament.type !== 'elimination')) return;
+    if (!currentTournament.teams || index >= currentTournament.teams.length) return;
+    
+    currentTournament.teams.splice(index, 1);
+    const tournaments = getTournaments();
+    tournaments[currentTournament.id] = currentTournament;
+    saveTournaments(tournaments);
+    
+    updateTeamsList();
+    if (currentTournament.type === 'roundrobin') {
+      updateManualTeamDropdowns();
+    }
+    setStatus('Team removed');
+  }
+  
+  function generateRoundRobinSchedule() {
+    if (!currentTournament || currentTournament.type !== 'roundrobin') return;
+    const teams = [...(currentTournament.teams || [])];
+    
+    if (teams.length < 2) {
+      setStatus('Need at least 2 teams for round robin');
+      return;
+    }
+    
+    const schedule = [];
+    const numTeams = teams.length;
+    
+    for (let i = 0; i < numTeams; i++) {
+      for (let j = i + 1; j < numTeams; j++) {
+        schedule.push({
+          prop: teams[i],
+          opp: teams[j],
+          round: Math.floor(schedule.length / Math.ceil(numTeams / 2)) + 1,
+          completed: false
+        });
+      }
+    }
+    
+    currentTournament.schedule = schedule;
+    const tournaments = getTournaments();
+    tournaments[currentTournament.id] = currentTournament;
+    saveTournaments(tournaments);
+    
+    setStatus(`Generated ${schedule.length} matchups for ${teams.length} teams`);
+    updateStandings();
+    updateMatchupSelector();
+    updateManualScheduleList();
+  }
+  
+  // Generate elimination bracket
+  function generateBracket() {
+    if (!currentTournament || currentTournament.type !== 'elimination') return;
+    const teams = [...(currentTournament.teams || [])];
+    
+    if (teams.length < 2) {
+      setStatus('Need at least 2 teams for elimination bracket');
+      return;
+    }
+    
+    // Calculate number of rounds needed (power of 2)
+    let bracketSize = 2;
+    while (bracketSize < teams.length) {
+      bracketSize *= 2;
+    }
+    
+    // Add byes if needed
+    const byes = bracketSize - teams.length;
+    const seededTeams = [...teams];
+    for (let i = 0; i < byes; i++) {
+      seededTeams.push(null); // null represents a bye
+    }
+    
+    // Shuffle teams for random seeding (or use provided order)
+    // For now, use teams in order
+    const rounds = Math.log2(bracketSize);
+    const bracket = [];
+    
+    // Initialize first round
+    const firstRound = [];
+    for (let i = 0; i < bracketSize; i += 2) {
+      firstRound.push({
+        id: `match_${i/2}`,
+        round: 1,
+        team1: seededTeams[i],
+        team2: seededTeams[i + 1],
+        winner: null,
+        completed: false
+      });
+    }
+    bracket.push(firstRound);
+    
+    // Generate subsequent rounds
+    for (let round = 2; round <= rounds; round++) {
+      const prevRound = bracket[round - 2];
+      const currentRound = [];
+      for (let i = 0; i < prevRound.length; i += 2) {
+        currentRound.push({
+          id: `match_r${round}_${i/2}`,
+          round: round,
+          team1: null, // Will be filled by winner of prevRound[i]
+          team2: null, // Will be filled by winner of prevRound[i+1]
+          winner: null,
+          completed: false,
+          dependsOn: [prevRound[i].id, prevRound[i + 1] ? prevRound[i + 1].id : null]
+        });
+      }
+      bracket.push(currentRound);
+    }
+    
+    currentTournament.bracket = bracket;
+    currentTournament.eliminated = [];
+    const tournaments = getTournaments();
+    tournaments[currentTournament.id] = currentTournament;
+    saveTournaments(tournaments);
+    
+    setStatus(`Generated bracket for ${teams.length} teams (${bracketSize} slots, ${rounds} rounds)`);
+    updateBracket();
+    updateBracketMatchupSelector();
+  }
+  
+  // Advance winner in bracket
+  function advanceBracketWinner(round, winner) {
+    if (!currentTournament || !currentTournament.bracket) return;
+    
+    const bracket = currentTournament.bracket;
+    const propTeam = round.teams.prop;
+    const oppTeam = round.teams.opp;
+    
+    // Find the match in the bracket by matching teams
+    for (let r = 0; r < bracket.length; r++) {
+      const matches = bracket[r];
+      for (let m = 0; m < matches.length; m++) {
+        const match = matches[m];
+        // Match teams (order doesn't matter)
+        const teamsMatch = (match.team1 === propTeam && match.team2 === oppTeam) ||
+                           (match.team1 === oppTeam && match.team2 === propTeam) ||
+                           (match.team1 === propTeam && match.team2 === null) ||
+                           (match.team1 === null && match.team2 === propTeam) ||
+                           (match.team1 === oppTeam && match.team2 === null) ||
+                           (match.team1 === null && match.team2 === oppTeam);
+        
+        if (teamsMatch && !match.completed) {
+          match.winner = winner;
+          match.completed = true;
+          
+          // Advance to next round
+          if (r < bracket.length - 1) {
+            const nextRound = bracket[r + 1];
+            for (let nm = 0; nm < nextRound.length; nm++) {
+              const nextMatch = nextRound[nm];
+              if (nextMatch.dependsOn && nextMatch.dependsOn.includes(match.id)) {
+                if (nextMatch.team1 === null || nextMatch.team1 === match.team1 || nextMatch.team1 === match.team2) {
+                  nextMatch.team1 = winner;
+                } else if (nextMatch.team2 === null || nextMatch.team2 === match.team1 || nextMatch.team2 === match.team2) {
+                  nextMatch.team2 = winner;
+                }
+              }
+            }
+          }
+          break;
+        }
+      }
+    }
+  }
+  
+  // Update bracket visualization
+  function updateBracket() {
+    if (!currentTournament || currentTournament.type !== 'elimination') {
+      bracketSection.style.display = 'none';
+      return;
+    }
+    
+    if (!currentTournament.bracket) {
+      bracketContainer.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">No bracket generated yet. Add teams and click "Generate Bracket"</p>';
+      bracketSection.style.display = 'block';
+      return;
+    }
+    
+    bracketSection.style.display = 'block';
+    const bracket = currentTournament.bracket;
+    const eliminated = currentTournament.eliminated || [];
+    
+    // Create bracket visualization
+    let html = '<div style="display:flex;gap:24px;align-items:flex-start;overflow-x:auto;padding:16px">';
+    
+    bracket.forEach((round, roundIndex) => {
+      html += `<div style="min-width:200px;flex-shrink:0">`;
+      html += `<h4 style="margin:0 0 12px 0;font-size:14px;color:var(--muted);text-align:center">Round ${round[0].round}</h4>`;
+      
+      round.forEach((match, matchIndex) => {
+        const isEliminated1 = match.team1 && eliminated.includes(match.team1);
+        const isEliminated2 = match.team2 && eliminated.includes(match.team2);
+        const isBye1 = match.team1 === null;
+        const isBye2 = match.team2 === null;
+        
+        html += `<div style="margin-bottom:16px;border:1px solid var(--bd);border-radius:8px;overflow:hidden;background:var(--card)">`;
+        
+        // Team 1
+        html += `<div style="padding:8px 12px;border-bottom:1px solid var(--bd);${match.winner === match.team1 ? 'background:rgba(34, 197, 94, 0.1);font-weight:600' : ''}${isEliminated1 ? 'opacity:0.5;text-decoration:line-through' : ''}">`;
+        if (isBye1) {
+          html += `<span style="color:var(--muted);font-style:italic">Bye</span>`;
+        } else {
+          html += `<span style="color:var(--prop-fg)">${match.team1 || 'TBD'}</span>`;
+        }
+        html += `</div>`;
+        
+        // Team 2
+        html += `<div style="padding:8px 12px;${match.winner === match.team2 ? 'background:rgba(34, 197, 94, 0.1);font-weight:600' : ''}${isEliminated2 ? 'opacity:0.5;text-decoration:line-through' : ''}">`;
+        if (isBye2) {
+          html += `<span style="color:var(--muted);font-style:italic">Bye</span>`;
+        } else {
+          html += `<span style="color:var(--opp-fg)">${match.team2 || 'TBD'}</span>`;
+        }
+        html += `</div>`;
+        
+        if (match.completed && match.winner) {
+          html += `<div style="padding:4px 12px;background:var(--bg);font-size:12px;color:var(--muted);text-align:center;border-top:1px solid var(--bd)">`;
+          html += `✓ ${match.winner} won`;
+          html += `</div>`;
+        }
+        
+        html += `</div>`;
+      });
+      
+      html += `</div>`;
+    });
+    
+    html += '</div>';
+    bracketContainer.innerHTML = html;
+  }
+  
+  function calculateStandings() {
+    if (!currentTournament || currentTournament.type !== 'roundrobin') return {};
+    
+    const teams = currentTournament.teams || [];
+    const standings = {};
+    
+    teams.forEach(team => {
+      standings[team] = { wins: 0, losses: 0, draws: 0, points: 0 };
+    });
+    
+    const completedRounds = currentTournament.rounds.filter(r => r.result);
+    completedRounds.forEach(round => {
+      const propTeam = round.teams.prop;
+      const oppTeam = round.teams.opp;
+      const result = round.result;
+      
+      if (result.winner === 'prop') {
+        standings[propTeam].wins++;
+        standings[oppTeam].losses++;
+        standings[propTeam].points += 3;
+      } else if (result.winner === 'opp') {
+        standings[oppTeam].wins++;
+        standings[propTeam].losses++;
+        standings[oppTeam].points += 3;
+      } else {
+        standings[propTeam].draws++;
+        standings[oppTeam].draws++;
+        standings[propTeam].points += 1;
+        standings[oppTeam].points += 1;
+      }
+    });
+    
+    return standings;
+  }
+  
+  function updateStandings() {
+    if (!currentTournament || currentTournament.type !== 'roundrobin') {
+      leagueStandingsSection.style.display = 'none';
+      return;
+    }
+    
+    const standings = calculateStandings();
+    const teams = currentTournament.teams || [];
+    
+    if (teams.length === 0) {
+      leagueStandingsSection.style.display = 'none';
+      return;
+    }
+    
+    leagueStandingsSection.style.display = 'block';
+    
+    const sorted = teams.map(team => ({
+      team,
+      ...standings[team] || { wins: 0, losses: 0, draws: 0, points: 0 }
+    })).sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      return b.wins - a.wins;
+    });
+    
+    standingsBody.innerHTML = sorted.map((entry, index) => `
+      <tr style="border-bottom:1px solid var(--bd)">
+        <td style="padding:8px">
+          <strong>${index + 1}.</strong> ${entry.team}
+        </td>
+        <td style="text-align:center;padding:8px">${entry.wins}</td>
+        <td style="text-align:center;padding:8px">${entry.losses}</td>
+        <td style="text-align:center;padding:8px">${entry.draws}</td>
+        <td style="text-align:center;padding:8px"><strong>${entry.points}</strong></td>
+      </tr>
+    `).join('');
+  }
+  
+  function updateMatchupSelector() {
+    if (!currentTournament || currentTournament.type !== 'roundrobin') {
+      if (currentTournament && currentTournament.type === 'elimination') {
+        updateBracketMatchupSelector();
+      } else {
+        matchupSelectorSection.style.display = 'none';
+      }
+      return;
+    }
+    
+    const schedule = currentTournament.schedule || [];
+    const completedRounds = currentTournament.rounds.filter(r => r.result) || [];
+    
+    if (schedule.length === 0) {
+      matchupSelectorSection.style.display = 'none';
+      return;
+    }
+    
+    const completedMatchups = new Map();
+    completedRounds.forEach(round => {
+      const key = `${round.teams.prop} vs ${round.teams.opp}`;
+      const reverseKey = `${round.teams.opp} vs ${round.teams.prop}`;
+      completedMatchups.set(key, true);
+      completedMatchups.set(reverseKey, true);
+    });
+    
+    const availableMatchups = [];
+    const matchupsByRound = {};
+    
+    schedule.forEach((matchup, index) => {
+      const key = `${matchup.prop} vs ${matchup.opp}`;
+      const isCompleted = completedMatchups.has(key);
+      
+      if (!isCompleted) {
+        const round = matchup.round || 1;
+        if (!matchupsByRound[round]) matchupsByRound[round] = [];
+        matchupsByRound[round].push({ ...matchup, index });
+        availableMatchups.push({ ...matchup, index });
+      }
+    });
+    
+    matchupSelector.innerHTML = '<option value="">-- Select a matchup --</option>';
+    
+    if (availableMatchups.length === 0) {
+      matchupSelector.innerHTML += '<option value="" disabled>All matchups completed</option>';
+    } else {
+      Object.keys(matchupsByRound).sort((a, b) => a - b).forEach(roundNum => {
+        const roundMatchups = matchupsByRound[roundNum];
+        roundMatchups.forEach(matchup => {
+          const option = document.createElement('option');
+          option.value = matchup.index;
+          option.textContent = `Round ${roundNum}: ${matchup.prop} vs ${matchup.opp}`;
+          matchupSelector.appendChild(option);
+        });
+      });
+    }
+  }
+  
+  // Update matchup selector for elimination bracket
+  function updateBracketMatchupSelector() {
+    if (!currentTournament || currentTournament.type !== 'elimination' || !currentTournament.bracket) {
+      return;
+    }
+    
+    const bracket = currentTournament.bracket;
+    const completedRounds = currentTournament.rounds.filter(r => r.result) || [];
+    
+    // Create map of completed matchups
+    const completedMatchups = new Map();
+    completedRounds.forEach(round => {
+      const key = `${round.teams.prop} vs ${round.teams.opp}`;
+      const reverseKey = `${round.teams.opp} vs ${round.teams.prop}`;
+      completedMatchups.set(key, true);
+      completedMatchups.set(reverseKey, true);
+    });
+    
+    // Find available matches from bracket
+    const availableMatches = [];
+    
+    bracket.forEach((round, roundIndex) => {
+      round.forEach((match, matchIndex) => {
+        // Match is available if:
+        // 1. Both teams are set (not null/byes)
+        // 2. Match is not completed
+        // 3. Match hasn't been played yet
+        if (match.team1 && match.team2 && !match.completed) {
+          const key = `${match.team1} vs ${match.team2}`;
+          const reverseKey = `${match.team2} vs ${match.team1}`;
+          
+          if (!completedMatchups.has(key) && !completedMatchups.has(reverseKey)) {
+            availableMatches.push({
+              round: match.round,
+              team1: match.team1,
+              team2: match.team2,
+              roundIndex: roundIndex,
+              matchIndex: matchIndex,
+              matchId: match.id
+            });
+          }
+        }
+      });
+    });
+    
+    matchupSelector.innerHTML = '<option value="">-- Select a matchup from bracket --</option>';
+    
+    if (availableMatches.length === 0) {
+      matchupSelector.innerHTML += '<option value="" disabled>All bracket matches completed</option>';
+    } else {
+      // Group by round
+      const matchesByRound = {};
+      availableMatches.forEach(match => {
+        if (!matchesByRound[match.round]) matchesByRound[match.round] = [];
+        matchesByRound[match.round].push(match);
+      });
+      
+      Object.keys(matchesByRound).sort((a, b) => a - b).forEach(roundNum => {
+        const roundMatches = matchesByRound[roundNum];
+        roundMatches.forEach(match => {
+          const option = document.createElement('option');
+          option.value = `${match.roundIndex}_${match.matchIndex}`;
+          option.textContent = `Round ${roundNum}: ${match.team1} vs ${match.team2}`;
+          matchupSelector.appendChild(option);
+        });
+      });
+    }
+  }
+  
+  function setupTeamAutocomplete() {
+    if (!currentTournament) {
+      if (propTeamSuggestions) propTeamSuggestions.style.display = 'none';
+      if (oppTeamSuggestions) oppTeamSuggestions.style.display = 'none';
+      return;
+    }
+    
+    const teams = [];
+    if (currentTournament.teams && currentTournament.teams.length > 0) {
+      teams.push(...currentTournament.teams);
+    } else {
+      const completedRounds = currentTournament.rounds.filter(r => r.result);
+      completedRounds.forEach(round => {
+        if (round.teams.prop && !teams.includes(round.teams.prop)) teams.push(round.teams.prop);
+        if (round.teams.opp && !teams.includes(round.teams.opp)) teams.push(round.teams.opp);
+      });
+    }
+    
+    if (propTeamInput) {
+      propTeamInput.oninput = (e) => {
+        const value = e.target.value.toLowerCase();
+        if (!value || teams.length === 0) {
+          if (propTeamSuggestions) propTeamSuggestions.style.display = 'none';
+          return;
+        }
+        
+        const matches = teams.filter(team => team.toLowerCase().includes(value) && team.toLowerCase() !== value);
+        if (matches.length > 0 && propTeamSuggestions) {
+          propTeamSuggestions.innerHTML = matches.slice(0, 5).map(team => 
+            `<div style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--bd);transition:background 0.2s" 
+                   onmouseover="this.style.background='var(--bg)'" 
+                   onmouseout="this.style.background='var(--card)'"
+                   onclick="propTeamInput.value='${team.replace(/'/g, "\\'")}';propTeamSuggestions.style.display='none'">${team}</div>`
+          ).join('');
+          propTeamSuggestions.style.display = 'block';
+        } else if (propTeamSuggestions) {
+          propTeamSuggestions.style.display = 'none';
+        }
+      };
+      
+      propTeamInput.onblur = () => {
+        setTimeout(() => {
+          if (propTeamSuggestions) propTeamSuggestions.style.display = 'none';
+        }, 200);
+      };
+    }
+    
+    if (oppTeamInput) {
+      oppTeamInput.oninput = (e) => {
+        const value = e.target.value.toLowerCase();
+        if (!value || teams.length === 0) {
+          if (oppTeamSuggestions) oppTeamSuggestions.style.display = 'none';
+          return;
+        }
+        
+        const matches = teams.filter(team => team.toLowerCase().includes(value) && team.toLowerCase() !== value);
+        if (matches.length > 0 && oppTeamSuggestions) {
+          oppTeamSuggestions.innerHTML = matches.slice(0, 5).map(team => 
+            `<div style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--bd);transition:background 0.2s" 
+                   onmouseover="this.style.background='var(--bg)'" 
+                   onmouseout="this.style.background='var(--card)'"
+                   onclick="oppTeamInput.value='${team.replace(/'/g, "\\'")}';oppTeamSuggestions.style.display='none'">${team}</div>`
+          ).join('');
+          oppTeamSuggestions.style.display = 'block';
+        } else if (oppTeamSuggestions) {
+          oppTeamSuggestions.style.display = 'none';
+        }
+      };
+      
+      oppTeamInput.onblur = () => {
+        setTimeout(() => {
+          if (oppTeamSuggestions) oppTeamSuggestions.style.display = 'none';
+        }, 200);
+      };
+    }
+  }
+  
+  function updateManualScheduleList() {
+    if (!currentTournament || currentTournament.type !== 'roundrobin') {
+      manualScheduleList.innerHTML = '<p style="color:var(--muted);text-align:center;padding:10px">No matchups in schedule</p>';
+      return;
+    }
+    
+    const schedule = currentTournament.schedule || [];
+    if (schedule.length === 0) {
+      manualScheduleList.innerHTML = '<p style="color:var(--muted);text-align:center;padding:10px">No matchups in schedule</p>';
+      return;
+    }
+    
+    manualScheduleList.innerHTML = schedule.map((matchup, index) => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border:1px solid var(--bd);border-radius:4px;margin-bottom:4px;background:var(--bg)">
+        <div style="flex:1">
+          <span style="color:var(--prop-fg)">${matchup.prop}</span> vs 
+          <span style="color:var(--opp-fg)">${matchup.opp}</span>
+          <span style="color:var(--muted);font-size:12px;margin-left:8px">(Round ${matchup.round || 1})</span>
+        </div>
+        <button class="btn" onclick="removeMatchup(${index})" style="padding:4px 8px;font-size:12px;background:#dc2626;color:white">Remove</button>
+      </div>
+    `).join('');
+  }
+  
+  function updateManualTeamDropdowns() {
+    if (!currentTournament || currentTournament.type !== 'roundrobin') return;
+    
+    const teams = currentTournament.teams || [];
+    const teamOptions = teams.map(team => `<option value="${team}">${team}</option>`).join('');
+    
+    manualPropTeam.innerHTML = '<option value="">Select team...</option>' + teamOptions;
+    manualOppTeam.innerHTML = '<option value="">Select team...</option>' + teamOptions;
+  }
+  
+  function addMatchup() {
+    if (!currentTournament || currentTournament.type !== 'roundrobin') return;
+    
+    const propTeam = manualPropTeam.value.trim();
+    const oppTeam = manualOppTeam.value.trim();
+    const round = parseInt(manualRoundNum.value) || 1;
+    
+    if (!propTeam || !oppTeam) {
+      setStatus('Please select both teams');
+      return;
+    }
+    
+    if (propTeam === oppTeam) {
+      setStatus('Teams must be different');
+      return;
+    }
+    
+    if (!currentTournament.schedule) currentTournament.schedule = [];
+    
+    const duplicate = currentTournament.schedule.find(m => 
+      (m.prop === propTeam && m.opp === oppTeam) ||
+       (m.prop === oppTeam && m.opp === propTeam)
+    );
+    
+    if (duplicate) {
+      setStatus('This matchup already exists');
+      return;
+    }
+    
+    currentTournament.schedule.push({
+      prop: propTeam,
+      opp: oppTeam,
+      round: round,
+      completed: false
+    });
+    
+    updateManualScheduleList();
+    manualPropTeam.value = '';
+    manualOppTeam.value = '';
+    setStatus('Matchup added');
+  }
+  
+  function removeMatchup(index) {
+    if (!currentTournament || currentTournament.type !== 'roundrobin') return;
+    if (!currentTournament.schedule || index >= currentTournament.schedule.length) return;
+    
+    currentTournament.schedule.splice(index, 1);
+    updateManualScheduleList();
+    setStatus('Matchup removed');
+  }
+  
+  function clearSchedule() {
+    if (!currentTournament || currentTournament.type !== 'roundrobin') return;
+    
+    const confirmed = confirm('Clear all matchups from schedule?');
+    if (!confirmed) return;
+    
+    currentTournament.schedule = [];
+    updateManualScheduleList();
+    setStatus('Schedule cleared');
+  }
+  
+  function saveSchedule() {
+    if (!currentTournament || currentTournament.type !== 'roundrobin') return;
+    
+    const tournaments = getTournaments();
+    tournaments[currentTournament.id] = currentTournament;
+    saveTournaments(tournaments);
+    
+    updateMatchupSelector();
+    setStatus('Schedule saved');
+  }
+  
+  function switchTournamentSubTab(subTabName) {
+    if (!tournamentSubTabs || tournamentSubTabs.style.display === 'none') return;
+    
+    teamsMatchupsTabBtn.classList.remove('active');
+    bracketTabBtn.classList.remove('active');
+    roundManagementTabBtn.classList.remove('active');
+    standingsTabBtn.classList.remove('active');
+    roundScoresTabBtn.classList.remove('active');
+    teamsMatchupsTabContent.classList.remove('active');
+    bracketTabContent.classList.remove('active');
+    roundManagementTabContent.classList.remove('active');
+    standingsTabContent.classList.remove('active');
+    roundScoresTabContent.classList.remove('active');
+    
+    if (subTabName === 'teams-matchups') {
+      teamsMatchupsTabBtn.classList.add('active');
+      teamsMatchupsTabContent.classList.add('active');
+    } else if (subTabName === 'bracket') {
+      bracketTabBtn.classList.add('active');
+      bracketTabContent.classList.add('active');
+    } else if (subTabName === 'round-management') {
+      roundManagementTabBtn.classList.add('active');
+      roundManagementTabContent.classList.add('active');
+    } else if (subTabName === 'standings') {
+      standingsTabBtn.classList.add('active');
+      standingsTabContent.classList.add('active');
+    } else if (subTabName === 'round-scores') {
+      roundScoresTabBtn.classList.add('active');
+      roundScoresTabContent.classList.add('active');
+    }
+  }
+  
+  function downloadBackupFile(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      if (document.body.contains(a)) document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  }
+  
+  function exportTournaments() {
+    const tournaments = getTournaments();
+    const exportData = {
+      version: '1.0',
+      timestamp: new Date().toISOString(),
+      tournaments: tournaments
+    };
+    
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const filename = `tournaments_${new Date().toISOString().split('T')[0]}_${Date.now()}.json`;
+    
+    try {
+      if ('showSaveFilePicker' in window) {
+        (async () => {
+          try {
+            const fileHandle = await window.showSaveFilePicker({
+              suggestedName: filename,
+              types: [{
+                description: 'JSON files',
+                accept: { 'application/json': ['.json'] }
+              }]
+            });
+            const writable = await fileHandle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            setStatus('Tournaments exported successfully!');
+          } catch (err) {
+            if (err.name !== 'AbortError') {
+              downloadBackupFile(blob, filename);
+              setStatus('Tournaments exported successfully!');
+            }
+          }
+        })();
+      } else {
+        downloadBackupFile(blob, filename);
+        setStatus('Tournaments exported successfully!');
+      }
+    } catch (e) {
+      console.error('Export failed:', e);
+      alert('Failed to export tournaments. Please try again.');
+    }
+  }
+  
+  function importTournaments(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        const importedTournaments = data.tournaments || data;
+        
+        if (!importedTournaments || typeof importedTournaments !== 'object') {
+          alert('Invalid tournament file format.');
+          return;
+        }
+        
+        const confirmed = confirm(`Import ${Object.keys(importedTournaments).length} tournament(s)? This will merge with existing tournaments.`);
+        if (!confirmed) return;
+        
+        const existingTournaments = getTournaments();
+        let importedCount = 0;
+        
+        Object.entries(importedTournaments).forEach(([id, tournament]) => {
+          const newId = 'tournament_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+          existingTournaments[newId] = { ...tournament, id: newId };
+          importedCount++;
+        });
+        
+        saveTournaments(existingTournaments);
+        updateTournamentDropdown();
+        setStatus(`Imported ${importedCount} tournament(s) successfully!`);
+      } catch (err) {
+        console.error('Import failed:', err);
+        alert('Failed to import tournaments. Invalid file format.');
+      }
+    };
+    reader.onerror = () => {
+      alert('Failed to read tournament file.');
+    };
+    reader.readAsText(file);
+  }
+  
+  function purgeTournaments() {
+    const confirmed = confirm('Are you sure you want to delete ALL tournaments? This cannot be undone.');
+    if (!confirmed) return;
+    
+    try {
+      localStorage.removeItem('debateTournaments');
+      currentTournament = null;
+      currentRound = null;
+      updateTournamentDropdown();
+      updateTournamentUI();
+      setStatus('All tournaments purged.');
+    } catch (e) {
+      console.error('Purge failed:', e);
+      alert('Failed to purge tournaments.');
+    }
+  }
+  
+  // Make functions globally accessible
+  window.removeTeam = removeTeam;
+  window.removeMatchup = removeMatchup;
+  
+  // Event handlers
+  newTournamentBtn.onclick = () => {
+    const name = prompt('Enter tournament name:');
+    if (!name || name.trim() === '') return;
+    
+    const type = tournamentTypeSelect.value || 'manual';
+    const tournament = createTournament(name.trim(), currentFormat, type);
+    updateTournamentDropdown();
+    tournamentSelect.value = tournament.id;
+    currentTournament = tournament;
+    updateTournamentUI();
+    if (tournamentSubTabs && tournamentSubTabs.style.display !== 'none') {
+      switchTournamentSubTab('teams-matchups');
+    }
+    setStatus(`Tournament "${tournament.name}" created!`);
+  };
+  
+  tournamentTypeSelect.onchange = () => {
+    if (!currentTournament) return;
+    
+    const newType = tournamentTypeSelect.value;
+    currentTournament.type = newType;
+    
+    if (newType === 'roundrobin') {
+      if (!currentTournament.teams) currentTournament.teams = [];
+      if (!currentTournament.schedule) currentTournament.schedule = [];
+      currentTournament.bracket = null;
+      currentTournament.eliminated = null;
+    } else if (newType === 'elimination') {
+      if (!currentTournament.teams) currentTournament.teams = [];
+      currentTournament.schedule = null;
+      currentTournament.bracket = null;
+      currentTournament.eliminated = [];
+    } else {
+      currentTournament.teams = null;
+      currentTournament.schedule = null;
+      currentTournament.bracket = null;
+      currentTournament.eliminated = null;
+    }
+    
+    const tournaments = getTournaments();
+    tournaments[currentTournament.id] = currentTournament;
+    saveTournaments(tournaments);
+    
+    updateTournamentUI();
+  };
+  
+  addTeamBtn.onclick = () => {
+    const teamName = newTeamInput.value.trim();
+    addTeam(teamName);
+  };
+  
+  newTeamInput.onkeypress = (e) => {
+    if (e.key === 'Enter') {
+      const teamName = newTeamInput.value.trim();
+      addTeam(teamName);
+    }
+  };
+  
+  generateRoundRobinBtn.onclick = () => {
+    generateRoundRobinSchedule();
+  };
+  
+  generateBracketBtn.onclick = () => {
+    generateBracket();
+  };
+  
+  editScheduleBtn.onclick = () => {
+    if (!currentTournament || currentTournament.type !== 'roundrobin') return;
+    
+    manualScheduleSection.style.display = manualScheduleSection.style.display === 'none' ? 'block' : 'none';
+    if (manualScheduleSection.style.display === 'block') {
+      updateManualTeamDropdowns();
+      updateManualScheduleList();
+    }
+  };
+  
+  addMatchupBtn.onclick = () => {
+    addMatchup();
+  };
+  
+  clearScheduleBtn.onclick = () => {
+    clearSchedule();
+  };
+  
+  saveScheduleBtn.onclick = () => {
+    saveSchedule();
+  };
+  
+  exportTournamentsBtn.onclick = () => {
+    exportTournaments();
+  };
+  
+  importTournamentsBtn.onclick = () => {
+    importTournamentsFile.click();
+  };
+  
+  importTournamentsFile.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      importTournaments(file);
+      e.target.value = '';
+    }
+  };
+  
+  purgeTournamentsBtn.onclick = () => {
+    purgeTournaments();
+  };
+  
+  tournamentSelect.onchange = () => {
+    const tournamentId = tournamentSelect.value;
+    if (!tournamentId) {
+      currentTournament = null;
+      currentRound = null;
+      updateTournamentUI();
+      updateRoundHistory();
+      return;
+    }
+    
+    const tournament = getTournament(tournamentId);
+    if (!tournament) return;
+    
+    currentTournament = tournament;
+    const activeRound = tournament.rounds.find(r => !r.result);
+    currentRound = activeRound || null;
+    updateTournamentUI();
+    updateRoundHistory();
+    if (tournamentSubTabs && tournamentSubTabs.style.display !== 'none') {
+      switchTournamentSubTab('teams-matchups');
+    }
+  };
+  
+  matchupSelector.onchange = () => {
+    const selectedValue = matchupSelector.value;
+    if (!selectedValue || !currentTournament) return;
+    
+    if (currentTournament.type === 'roundrobin' && currentTournament.schedule) {
+      // Round robin matchup selection
+      const matchup = currentTournament.schedule[parseInt(selectedValue)];
+      if (matchup) {
+        propTeamInput.value = matchup.prop;
+        oppTeamInput.value = matchup.opp;
+        roundNumberInput.value = matchup.round || 1;
+        setStatus(`Selected: ${matchup.prop} vs ${matchup.opp} (Round ${matchup.round || 1})`);
+      }
+    } else if (currentTournament.type === 'elimination' && currentTournament.bracket) {
+      // Elimination bracket matchup selection
+      const [roundIndex, matchIndex] = selectedValue.split('_').map(Number);
+      const bracket = currentTournament.bracket;
+      if (bracket[roundIndex] && bracket[roundIndex][matchIndex]) {
+        const match = bracket[roundIndex][matchIndex];
+        propTeamInput.value = match.team1 || '';
+        oppTeamInput.value = match.team2 || '';
+        roundNumberInput.value = match.round || 1;
+        setStatus(`Selected: ${match.team1 || 'TBD'} vs ${match.team2 || 'TBD'} (Round ${match.round || 1})`);
+      }
+    }
+  };
+  
+  startRoundBtn.onclick = () => {
+    if (!currentTournament) {
+      setStatus('Please select a tournament first');
+      return;
+    }
+    
+    const roundNum = parseInt(roundNumberInput.value) || currentTournament.rounds.length + 1;
+    const propTeam = propTeamInput.value.trim() || 'Team A';
+    const oppTeam = oppTeamInput.value.trim() || 'Team B';
+    const room = roundRoomInput.value.trim() || '';
+    
+    startRound(currentTournament.id, roundNum, propTeam, oppTeam, room);
+    
+    propTeamInput.value = '';
+    oppTeamInput.value = '';
+    roundRoomInput.value = '';
+    matchupSelector.value = '';
+    if (propTeamSuggestions) propTeamSuggestions.style.display = 'none';
+    if (oppTeamSuggestions) oppTeamSuggestions.style.display = 'none';
+  };
+  
+  endRoundBtn.onclick = () => {
+    if (!currentRound) return;
+    
+    const propScore = prompt('Enter Proposition score (or leave blank):');
+    const oppScore = prompt('Enter Opposition score (or leave blank):');
+    const winner = confirm('Did Proposition win? (OK = Yes, Cancel = No)') ? 'prop' : 'opp';
+    
+    const result = {
+      winner: winner,
+      propScore: propScore ? parseInt(propScore) : null,
+      oppScore: oppScore ? parseInt(oppScore) : null,
+      notes: ''
+    };
+    
+    endRound(result);
+  };
+  
+  cancelRoundBtn.onclick = () => {
+    if (!currentRound || !currentTournament) return;
+    
+    const confirmed = confirm('Cancel this round? It will not be saved.');
+    if (!confirmed) return;
+    
+    currentTournament.rounds = currentTournament.rounds.filter(r => r.id !== currentRound.id);
+    saveTournaments(getTournaments());
+    
+    currentRound = null;
+    updateTournamentUI();
+    updateRoundHistory();
+    updateBracketMatchupSelector();
+    updateTournamentDropdown();
+    setStatus('Round cancelled');
+  };
+  
+  // Edit score input change handlers to update winner display
+  if (editPropScoreInput) {
+    editPropScoreInput.oninput = updateEditWinnerDisplay;
+    editPropScoreInput.onchange = updateEditWinnerDisplay;
+  }
+  if (editOppScoreInput) {
+    editOppScoreInput.oninput = updateEditWinnerDisplay;
+    editOppScoreInput.onchange = updateEditWinnerDisplay;
+  }
+  
+  saveEditRoundBtn.onclick = () => {
+    if (editingRound === null || !currentTournament || !currentTournament.rounds[editingRound]) return;
+    
+    const round = currentTournament.rounds[editingRound];
+    const oldResult = round.result ? {...round.result} : null; // Save old result before updating
+    const propScore = editPropScoreInput.value ? parseFloat(editPropScoreInput.value) : null;
+    const oppScore = editOppScoreInput.value ? parseFloat(editOppScoreInput.value) : null;
+    
+    // Determine winner based on scores (automatic)
+    let winner = null;
+    if (propScore !== null && oppScore !== null) {
+      if (propScore > oppScore) {
+        winner = 'prop';
+      } else if (oppScore > propScore) {
+        winner = 'opp';
+      } else {
+        // Draw - ask user to determine winner
+        const drawWinner = confirm('Scores are tied. Did Proposition win? (OK = Yes, Cancel = No)') ? 'prop' : 'opp';
+        winner = drawWinner;
+      }
+    } else {
+      // If scores not provided, ask for winner
+      winner = confirm('Did Proposition win? (OK = Yes, Cancel = No)') ? 'prop' : 'opp';
+    }
+    
+    // Update the round result
+    round.result = {
+      winner: winner,
+      propScore: propScore,
+      oppScore: oppScore,
+      notes: oldResult ? oldResult.notes : ''
+    };
+    
+    // Handle elimination bracket updates if needed
+    if (currentTournament.type === 'elimination' && currentTournament.bracket) {
+      const oldWinner = oldResult ? (oldResult.winner === 'prop' ? round.teams.prop : round.teams.opp) : null;
+      const newWinner = winner === 'prop' ? round.teams.prop : round.teams.opp;
+      const bracket = currentTournament.bracket;
+      const propTeam = round.teams.prop;
+      const oppTeam = round.teams.opp;
+      
+      // Find the match in the bracket
+      for (let r = 0; r < bracket.length; r++) {
+        const matches = bracket[r];
+        for (let m = 0; m < matches.length; m++) {
+          const match = matches[m];
+          // Match teams (order doesn't matter)
+          const teamsMatch = (match.team1 === propTeam && match.team2 === oppTeam) ||
+                             (match.team1 === oppTeam && match.team2 === propTeam) ||
+                             (match.team1 === propTeam && match.team2 === null) ||
+                             (match.team1 === null && match.team2 === propTeam) ||
+                             (match.team1 === oppTeam && match.team2 === null) ||
+                             (match.team1 === null && match.team2 === oppTeam);
+          
+          if (teamsMatch) {
+            // If winner changed, remove old winner from next round
+            if (oldWinner && oldWinner !== newWinner && r < bracket.length - 1) {
+              const nextRound = bracket[r + 1];
+              for (let nm = 0; nm < nextRound.length; nm++) {
+                const nextMatch = nextRound[nm];
+                if (nextMatch.dependsOn && nextMatch.dependsOn.includes(match.id)) {
+                  if (nextMatch.team1 === oldWinner) {
+                    nextMatch.team1 = null;
+                  } else if (nextMatch.team2 === oldWinner) {
+                    nextMatch.team2 = null;
+                  }
+                }
+              }
+            }
+            
+            // Update match with new winner
+            match.winner = newWinner;
+            match.completed = true;
+            
+            // Advance new winner to next round
+            if (r < bracket.length - 1) {
+              const nextRound = bracket[r + 1];
+              for (let nm = 0; nm < nextRound.length; nm++) {
+                const nextMatch = nextRound[nm];
+                if (nextMatch.dependsOn && nextMatch.dependsOn.includes(match.id)) {
+                  if (nextMatch.team1 === null || nextMatch.team1 === propTeam || nextMatch.team1 === oppTeam) {
+                    nextMatch.team1 = newWinner;
+                  } else if (nextMatch.team2 === null || nextMatch.team2 === propTeam || nextMatch.team2 === oppTeam) {
+                    nextMatch.team2 = newWinner;
+                  }
+                }
+              }
+            }
+            
+            // Update eliminated list
+            if (!currentTournament.eliminated) currentTournament.eliminated = [];
+            const loser = winner === 'prop' ? oppTeam : propTeam;
+            if (!currentTournament.eliminated.includes(loser)) {
+              currentTournament.eliminated.push(loser);
+            }
+            // Remove new winner from eliminated if they were previously eliminated
+            const winnerIndex = currentTournament.eliminated.indexOf(newWinner);
+            if (winnerIndex > -1) {
+              currentTournament.eliminated.splice(winnerIndex, 1);
+            }
+            // Remove old winner from eliminated if they lost
+            if (oldWinner && oldWinner !== newWinner) {
+              const oldWinnerIndex = currentTournament.eliminated.indexOf(oldWinner);
+              if (oldWinnerIndex > -1) {
+                currentTournament.eliminated.splice(oldWinnerIndex, 1);
+              }
+            }
+            
+            break;
+          }
+        }
+      }
+    }
+    
+    // Update schedule for round robin tournaments
+    if (currentTournament.type === 'roundrobin' && currentTournament.schedule) {
+      // Manually update the schedule entry for this round
+      const matchup = currentTournament.schedule.find(m => 
+        (m.prop === round.teams.prop && m.opp === round.teams.opp) ||
+        (m.prop === round.teams.opp && m.opp === round.teams.prop)
+      );
+      
+      if (matchup) {
+        matchup.completed = true;
+        matchup.result = round.result;
+        matchup.round = round.number;
+      }
+    }
+    
+    // Save tournament
+    const tournaments = getTournaments();
+    tournaments[currentTournament.id] = currentTournament;
+    saveTournaments(tournaments);
+    
+    // Reload currentTournament from storage to ensure we have the latest data
+    const updatedTournaments = getTournaments();
+    currentTournament = updatedTournaments[currentTournament.id];
+    
+    // Clear edit mode
+    editingRound = null;
+    roundEditSection.style.display = 'none';
+    
+    // Update UI
+    updateTournamentUI();
+    updateRoundHistory();
+    updateStandings();
+    updateBracket();
+    updateBracketMatchupSelector();
+    updateTournamentDropdown();
+    setStatus('Round updated successfully!');
+  };
+  
+  cancelEditRoundBtn.onclick = () => {
+    editingRound = null;
+    roundEditSection.style.display = 'none';
+    updateTournamentUI();
+    setStatus('Edit cancelled');
+  };
+  
+  teamsMatchupsTabBtn.onclick = () => switchTournamentSubTab('teams-matchups');
+  bracketTabBtn.onclick = () => switchTournamentSubTab('bracket');
+  roundManagementTabBtn.onclick = () => switchTournamentSubTab('round-management');
+  standingsTabBtn.onclick = () => switchTournamentSubTab('standings');
+  roundScoresTabBtn.onclick = () => switchTournamentSubTab('round-scores');
+  
+  // Initialize
+  updateTournamentDropdown();
+  setStatus('Ready');
+})();
+</script>
+</body>
+</html>
+
